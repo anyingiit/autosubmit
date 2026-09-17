@@ -87,6 +87,19 @@ def _partial_dump_then_fail(cmd: list[str], stdout, **_) -> None:
     raise subprocess.CalledProcessError(1, cmd, stderr="Error: database disk image is malformed")
 
 
+def test_install_creates_schema_migrations(autosubmit_config) -> None:
+    """install() creates the general database with a recorded schema version."""
+    autosubmit_config("a000", {})
+
+    conn = sqlite3.connect(BasicConfig.DB_PATH)
+    try:
+        rows = conn.execute("SELECT version FROM general_schema_migrations").fetchall()
+    finally:
+        conn.close()
+
+    assert rows == [(db_common.CURRENT_DATABASE_VERSION,)]
+
+
 @pytest.mark.parametrize(
     "fn",
     [
